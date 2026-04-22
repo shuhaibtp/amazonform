@@ -22,17 +22,19 @@ export async function POST(req: Request) {
     const newLead = new Lead(body);
     await newLead.save();
 
-    // Send to Google Sheets Webhook if configured (in the background)
+    // Send to Google Sheets Webhook if configured
     if (process.env.GOOGLE_SHEET_WEBHOOK_URL) {
-      fetch(process.env.GOOGLE_SHEET_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
-      }).catch((sheetError) => {
+      try {
+        await fetch(process.env.GOOGLE_SHEET_WEBHOOK_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(body),
+        });
+      } catch (sheetError) {
         console.error('Error saving to Google Sheets:', sheetError);
-      });
+      }
     }
 
     return NextResponse.json({ success: true, message: 'Lead saved successfully' }, { status: 201 });
